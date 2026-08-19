@@ -1,0 +1,64 @@
+# ---------------------------------------------------------------------------
+# Private job-search data — NEVER commit. See PLAN_2.0.md §3.
+# This repo is public. The real board lives only in the deployed D1.
+# ---------------------------------------------------------------------------
+data/private/
+job-search-tracker-*.md
+job-search-dashboard-*.html
+# v1.0 plan: superseded by PLAN_2.0.md and names real companies with real
+# scores. Kept locally for reference; PLAN_2.0.md §0 records what changed.
+PLAN.md
+seed.local.*
+*.local.json
+*.private.*
+
+# Secrets and env
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+*.pem
+*.key
+
+# Cloudflare / OpenNext
+.wrangler/
+.open-next/
+wrangler.toml.bak
+.mf/
+
+# Node / Next
+node_modules/
+.next/
+# Anchored: unanchored build/ and dist/ would swallow any future nested source
+# directory of the same name. Build output only ever lands at the repo root.
+/out/
+/build/
+/dist/
+*.tsbuildinfo
+.npm/
+.pnpm-store/
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+
+# Test / coverage
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
