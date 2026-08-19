@@ -43,14 +43,32 @@ fi
 
 # --- Token deny-list: grep staged additions for literal tokens.
 if [[ -f "$DENYLIST_FILE" ]]; then
-  diff_content="$(git diff --cached -- . ":(exclude)$DENYLIST_FILE" || true)"
+  # Exclude the denylist file itself from the diff so its own tokens don't
+  # self-match. Only valid as a pathspec when it's inside the repo tree —
+  # an absolute path outside the repo can't appear in `git diff` anyway.
+  exclude_arg=()
+  case "$DENYLIST_FILE" in
+    /*) ;;
+    *) exclude_arg=(":(exclude)$DENYLIST_FILE") ;;
+  esac
+  diff_content="$(git diff --cached -- . "${exclude_arg[@]}")"
   added_lines="$(echo "$diff_content" | grep -E '^\+' | grep -Ev '^\+\+\+' || true)"
 
   while IFS= read -r token; do
     token="${token%%#*}"                # strip trailing comments
     token="$(echo "$token" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
     [[ -z "$token" ]] && continue
-    if echo "$added_lines" | grep -qiF -- "$token"; then
+
+    # Word-boundary match, not plain substring — a short token would
+    # otherwise false-positive inside an unrelated longer word. Only apply
+    # \b on a side that starts/ends on a word character; a token starting
+    # or ending with e.g. "£" has no word char there for \b to anchor on.
+    esc="$(printf '%s' "$token" | sed -e 's/[][\.^$*+?(){}|\\]/\\&/g')"
+    left='\b'; right='\b'
+    [[ "$token" =~ ^[^A-Za-z0-9] ]] && left=''
+    [[ "$token" =~ [^A-Za-z0-9]$ ]] && right=''
+
+    if echo "$added_lines" | grep -qiE -- "${left}${esc}${right}"; then
       echo "check:privacy: staged content matches a deny-listed token"
       fail=1
     fi
