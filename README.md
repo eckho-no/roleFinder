@@ -51,10 +51,11 @@ regression. Without it, "the coach improves the rubric" would be unfalsifiable.
 
 ## Privacy
 
-This repo is public; the job-search data is not. Committed fixtures are
-synthetic, eval fixtures are anonymised, and the real board exists only in the
-deployed database. A `check:privacy` deny-list runs as a pre-commit hook and as
-a CI job. See [PLAN_2.0.md §3](PLAN_2.0.md).
+This repo is private, and is written as though it weren't. Committed fixtures
+are synthetic, eval fixtures are anonymised, and the real board exists only in
+the deployed database — so making the repo public stays a one-click decision
+rather than a history rewrite. A `check:privacy` deny-list runs as a pre-commit
+hook and as a CI job. See [PLAN_2.0.md §3](PLAN_2.0.md).
 
 ## Build phases
 

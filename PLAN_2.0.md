@@ -2,7 +2,8 @@
 
 > **Supersedes:** `PLAN.md` (v1.0)
 > **Date:** 2026-08-19
-> **Repo:** https://github.com/eckho-no/roleFinder (public)
+> **Repo:** https://github.com/eckho-no/roleFinder (**private**, built to be
+> safely flippable to public — see §3)
 > **Execution model:** agentic — an agent works one GitHub issue at a time,
 > one branch per issue, one PR per issue, CI green before merge.
 
@@ -34,8 +35,10 @@ section becomes **a real eval harness with its own phase and a CI gate** — see
 
 ### Decisions confirmed with the user (2026-08-19)
 
-- **Repo is public, seed data is synthetic.** Real tracker data never enters
-  git. See §3.
+- **Repo is private, seed data is synthetic anyway.** Real tracker data never
+  enters git. Private today, but this is a portfolio project — the discipline is
+  what keeps "make it public" a one-click decision later rather than a history
+  rewrite. See §3.
 - **The markdown loop keeps running in parallel.** This build is on its own
   timeline; `job-search-tracker-v8_x.md` remains the system of record until the
   app reaches parity (Phase 11). No phase here is on the critical path for the
@@ -94,11 +97,20 @@ sources.
 
 ---
 
-## 3. Privacy architecture (public repo)
+## 3. Privacy architecture
+
+The repo is **private today**. The rules below apply anyway, because this is a
+portfolio project and the point of a portfolio project is to be seen.
+
+The failure mode being designed out is specific: commit real data now while it's
+private, flip the repo public in three months, and every commit since day one is
+public with it. Deleting a file later does nothing — history is what gets
+cloned. Keeping the discipline from the first commit means "make this public" is
+a one-click decision, not a `git filter-repo` and a rewrite.
 
 The tracker contains a salary floor, a home area, a not-commutable list, candid
 company commentary, a personal gaps list and a career decision date. None of it
-goes into a public repo.
+goes into git.
 
 **Three tiers of data:**
 
@@ -296,7 +308,9 @@ A hello-world that proves the whole delivery path before any feature exists.
 - `middleware.ts` gate **and** a `requireSession()` call in every route handler.
   Middleware alone is one matcher typo away from an open API
 - **Demo mode:** `DEMO_PASSWORD` issues a read-only session over the synthetic
-  board. Without it the portfolio piece is invisible to its audience
+  board. The repo being private makes this *more* important, not less — a
+  shareable demo URL becomes the only way anyone sees this work without being
+  given repo access
 
 **Exit:** fresh browser can't reach anything; demo password reaches a read-only
 synthetic board; login is rate-limited.
