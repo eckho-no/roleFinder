@@ -11,14 +11,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # scripts/privacy-denylist.private.txt is gitignored, so it never
+      # exists on a fresh CI checkout — without this step, the real
+      # check:privacy run below silently downgrades to filename-only
+      # checking. If a PRIVACY_DENYLIST_B64 repo secret is set (base64 of
+      # the real token file), decode it here so CI checks real tokens too.
+      # Otherwise, warn loudly rather than passing silently.
+      - name: Load real deny-list (optional) and warn if absent
+        env:
+          PRIVACY_DENYLIST_B64: ${{ secrets.PRIVACY_DENYLIST_B64 }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${PRIVACY_DENYLIST_B64:-}" ]]; then
+            echo "$PRIVACY_DENYLIST_B64" | base64 -d > scripts/privacy-denylist.private.txt
+          else
+            echo "::warning::No PRIVACY_DENYLIST_B64 secret configured — this CI run only checks filename patterns, not real deny-listed content. See PLAN_2.0.md §3."
+          fi
+
       - name: check:privacy (real staged/tracked state)
         run: npm run check:privacy
 
       - name: Deliberate test — a deny-listed token is blocked
         run: |
           set -euo pipefail
-          git config user.email "ci@example.com"
-          git config user.name "CI"
+          trap 'git reset -- scripts/ci-privacy-self-test.txt 2>/dev/null; rm -f scripts/ci-privacy-self-test.txt' EXIT
 
           echo "ci-privacy-self-test-token" > scripts/ci-privacy-self-test.txt
           echo "ci-privacy-self-test-token" > /tmp/ci-denylist.txt
@@ -29,9 +45,6 @@ jobs:
             exit 1
           fi
           echo "OK: deny-listed token was blocked as expected"
-
-          git reset scripts/ci-privacy-self-test.txt
-          rm scripts/ci-privacy-self-test.txt
 
       - name: Deliberate test — clean tree passes
         run: npm run check:privacy
