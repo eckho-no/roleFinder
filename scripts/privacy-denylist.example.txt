@@ -1,0 +1,13 @@
+# Template for scripts/privacy-denylist.private.txt (gitignored, never committed).
+#
+# One literal token per line. Case-insensitive substring match against
+# staged additions. '#' starts a comment; blank lines are ignored.
+#
+# Populate with real values from your private tracker: the postcode
+# outward code, salary floor figures, not-commutable town names, and real
+# company names from the board. See PLAN_2.0.md §3.
+
+# EXAMPLE1
+# £00,000
+# Example Not-Commutable Town
+# Example Company Ltd
