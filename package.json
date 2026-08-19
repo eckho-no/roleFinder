@@ -1,0 +1,8 @@
+{
+  "name": "rolefinder",
+  "private": true,
+  "description": "Repo-level tooling for roleFinder. The Next.js app lives in web/ (from M1).",
+  "scripts": {
+    "check:privacy": "bash scripts/check-privacy.sh"
+  }
+}
