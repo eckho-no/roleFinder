@@ -16,5 +16,35 @@
   ],
   "observability": {
     "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rolefinder-db",
+      "database_id": "b16dc7e3-4a7b-4c86-a4cb-822d6b5f335b"
+    }
+  ],
+  "vectorize": [
+    {
+      "binding": "VECTORIZE",
+      "index_name": "rolefinder-vectors"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "3ef016f86a864448af729b3b6799cd93"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "QUEUE",
+        "queue": "rolefinder-queue"
+      }
+    ]
+  },
+  "ai": {
+    "binding": "AI"
   }
 }
