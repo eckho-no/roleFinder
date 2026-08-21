@@ -27,6 +27,14 @@ jobs:
 
       - run: npm ci
 
+      # cloudflare-env.d.ts is gitignored and never exists on a fresh
+      # checkout. `npm run deploy` runs `next build` internally, which
+      # type-checks the app and fails on the missing CloudflareEnv
+      # binding types (env.DB etc.) without this — doesn't need
+      # CLOUDFLARE_API_TOKEN, just reads wrangler.jsonc.
+      - name: generate types
+        run: npm run cf-typegen
+
       - name: Deploy
         id: deploy
         env:
