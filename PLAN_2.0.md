@@ -2,8 +2,8 @@
 
 > **Supersedes:** `PLAN.md` (v1.0)
 > **Date:** 2026-08-19
-> **Repo:** https://github.com/eckho-no/roleFinder (**private**, built to be
-> safely flippable to public — see §3)
+> **Repo:** https://github.com/eckho-no/roleFinder (**public** as of 2026-08-21,
+> after an M1 audit found the history clean of real data — see §3)
 > **Execution model:** agentic — an agent works one GitHub issue at a time,
 > one branch per issue, one PR per issue, CI green before merge.
 
@@ -99,14 +99,20 @@ sources.
 
 ## 3. Privacy architecture
 
-The repo is **private today**. The rules below apply anyway, because this is a
-portfolio project and the point of a portfolio project is to be seen.
+The repo is **public** (flipped 2026-08-21, during M1). The rules below applied
+from the first commit anyway, because this is a portfolio project and the point
+of a portfolio project is to be seen.
 
-The failure mode being designed out is specific: commit real data now while it's
-private, flip the repo public in three months, and every commit since day one is
-public with it. Deleting a file later does nothing — history is what gets
-cloned. Keeping the discipline from the first commit means "make this public" is
-a one-click decision, not a `git filter-repo` and a rewrite.
+The failure mode being designed out was specific: commit real data while private,
+flip the repo public later, and every commit since day one is public with it.
+Deleting a file later does nothing — history is what gets cloned. Keeping the
+discipline from the first commit meant "make this public" really was a one-click
+decision — verified by an M1 history audit (`git log --all -p`, plus a scan of
+every PR/issue body and comment, against the real deny-list) before flipping
+visibility. One narrow discipline gap surfaced: an early commit *message*
+(`check:privacy` only scans file diffs, not commit messages) quoted a real
+company name, unscored, while describing a false-positive bug in the privacy
+tooling itself. Judged minor enough to leave rather than rewrite history over.
 
 The tracker contains a salary floor, a home area, a not-commutable list, candid
 company commentary, a personal gaps list and a career decision date. None of it

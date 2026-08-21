@@ -35,8 +35,8 @@ npm run hooks:install    # once, per clone — wires the pre-commit privacy chec
 
 ## 3. Never commit real job-search data
 
-The repo is private today but built to be safely flippable to public — see
-PLAN_2.0.md §3. Real data never enters git, in data files or in prose.
+The repo is public (flipped 2026-08-21) — see PLAN_2.0.md §3. Real data never
+enters git, in data files or in prose.
 
 - `check:privacy` must pass. If it fails, fix the data — **don't weaken the
   deny-list** to make it pass.
