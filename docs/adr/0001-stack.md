@@ -61,3 +61,40 @@ which means a faster cold start and `drizzle-kit` generating SQL that
 - D1 has no native enums (SQLite), which cascades into a project-wide rule:
   every union field is TEXT plus a TypeScript union and a boundary
   validator — see ADR consequences reflected in the schema, PLAN_2.0.md §4.
+
+## Versions verified (2026-08-20, M1 issue #7)
+
+Checked against npm and each project's own docs before scaffolding:
+
+| Package | Version | Notes |
+|---|---|---|
+| `next` | 16.3.1 | Next.js 14 support from OpenNext ends Q1 2026 — 16 is the only sane choice now |
+| `@opennextjs/cloudflare` | 1.20.2 | Reached 1.0 GA in February 2026 |
+| `wrangler` | 4.124.0 | |
+| `drizzle-orm` | 0.45.2 | Not installed until M2; version recorded here so the M2 check starts from a known baseline |
+| `drizzle-kit` | 0.31.10 | Same — not installed until M2 |
+
+**Breaking changes / constraints affecting this plan:**
+
+- **"Node Middleware"** (the Next.js 15.2+ feature that runs `middleware.ts`
+  in the Node.js runtime instead of Edge) **is not yet supported** by
+  `@opennextjs/cloudflare`. Not a blocker — PLAN_2.0.md's auth design
+  (§5 M3) already assumes standard Edge-runtime middleware plus Web Crypto,
+  not Node APIs in middleware, so this constraint matches the existing plan
+  rather than changing it.
+- **Worker size limits apply to the compressed bundle**: 3 MiB on the free
+  plan, 10 MiB on paid. Worth watching from M5 onward once Anthropic
+  SDK-adjacent code and agent logic land — direct `fetch` to the Anthropic
+  API (already the plan, §2) avoids pulling in the Node SDK, which helps
+  here too.
+- **Drizzle's `db.transaction()` doesn't work against D1** — D1 doesn't
+  support the multi-statement `BEGIN TRANSACTION` semantics Drizzle's
+  transaction API assumes; `db.batch()` is the D1-compatible alternative
+  for atomic multi-statement writes. Relevant from M2 onward: the schema's
+  append-only writes (scores, sightings, notes) are mostly single-row
+  inserts, so this is unlikely to bite, but any M2/M5 code doing a
+  multi-table write in one operation needs `db.batch()`, not
+  `db.transaction()`.
+- `compatibility_date` in `wrangler.jsonc` must be set to the scaffold date
+  or later, and `compatibility_flags: ["nodejs_compat"]` is required —
+  both are set automatically by the `create-cloudflare` scaffolding CLI.
