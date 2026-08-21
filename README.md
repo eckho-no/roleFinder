@@ -4,7 +4,9 @@ A gated job-search tracker on Cloudflare Workers, with an agentic pipeline that
 extracts, scores, deduplicates and critiques listings — and an eval harness that
 measures whether the scoring agent actually agrees with a human.
 
-**Status:** planning complete, build not started. See
+**Status:** M0 (foundations) complete, M1 (deploy spine) underway. Deployed at
+[rolefinder.d-m-ector.workers.dev](https://rolefinder.d-m-ector.workers.dev) —
+currently a bare deploy-spine smoke test (no auth gate yet), see
 [PLAN_2.0.md](PLAN_2.0.md).
 
 ---
