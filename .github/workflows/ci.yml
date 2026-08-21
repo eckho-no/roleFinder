@@ -65,6 +65,14 @@ jobs:
 
       - run: npm ci
 
+      # Both generated .d.ts files are gitignored (regenerable) and never
+      # exist on a fresh checkout. typecheck depends on them — LayoutProps
+      # comes from Next's own route/layout typegen, and the CloudflareEnv
+      # binding types come from wrangler reading wrangler.jsonc. Neither
+      # needs Cloudflare credentials, just the config file.
+      - name: generate types
+        run: npx next typegen && npm run cf-typegen
+
       - name: typecheck
         run: npm run typecheck
 
