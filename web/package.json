@@ -12,7 +12,9 @@
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "seed": "node scripts/seed.mjs",
+    "seed:generate-fixture": "node scripts/generate-synthetic-fixture.mjs"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.2",
