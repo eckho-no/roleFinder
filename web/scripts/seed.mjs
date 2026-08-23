@@ -1,16 +1,23 @@
 #!/usr/bin/env node
-// Loads fixtures/seed.synthetic.json into D1 via `wrangler d1 execute`.
-// Usage: node scripts/seed.mjs [--remote]
+// Loads a seed fixture into D1 via `wrangler d1 execute`.
+// Usage: node scripts/seed.mjs [--remote] [--file <path>]
+//   --file defaults to fixtures/seed.synthetic.json.
+//   The private converter (scripts/convert-private-tracker.mjs) points this
+//   at ../data/private/seed.local.json instead — never the synthetic one.
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const target = process.argv.includes("--remote") ? "--remote" : "--local";
+const args = process.argv.slice(2);
+const target = args.includes("--remote") ? "--remote" : "--local";
+const fileFlagIndex = args.indexOf("--file");
+const fixturePath =
+  fileFlagIndex !== -1 && args[fileFlagIndex + 1]
+    ? args[fileFlagIndex + 1]
+    : new URL("../fixtures/seed.synthetic.json", import.meta.url).pathname;
 
-const fixture = JSON.parse(
-  readFileSync(new URL("../fixtures/seed.synthetic.json", import.meta.url), "utf8"),
-);
+const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
 
 const jsonColumns = new Set([
   "titles",
@@ -68,7 +75,7 @@ const sqlPath = join(dir, "seed.sql");
 writeFileSync(sqlPath, sql);
 
 try {
-  console.log(`Seeding ${target.slice(2)} D1 from fixtures/seed.synthetic.json...`);
+  console.log(`Seeding ${target.slice(2)} D1 from ${fixturePath}...`);
   execFileSync(
     "npx",
     ["wrangler", "d1", "execute", "rolefinder-db", target, "--file", sqlPath],
