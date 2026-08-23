@@ -24,6 +24,21 @@ npm run preview       # opennextjs-cloudflare build + wrangler dev, closer to pr
 npm run deploy        # opennextjs-cloudflare build + wrangler deploy
 ```
 
+## Database
+
+```bash
+npm run db:generate              # drizzle-kit generate — new migration from src/db/schema
+npx wrangler d1 migrations apply rolefinder-db --local   # or --remote
+npm run seed                     # load fixtures/seed.synthetic.json into local D1
+npm run seed -- --remote         # ...or into the deployed (production) D1
+npm run seed:generate-fixture    # regenerate fixtures/seed.synthetic.json itself
+```
+
+`fixtures/seed.synthetic.json` is fully fabricated — see PLAN_2.0.md §3. It's
+shaped like the real board (tier distribution, salary-stated ratio, a stale
+closed listing, a duplicated req) but contains no real company, score, or
+listing data.
+
 ## Other scripts
 
 - `npm run lint` — ESLint
