@@ -26,12 +26,23 @@ npm run deploy        # opennextjs-cloudflare build + wrangler deploy
 
 ## Database
 
+**Two D1 databases, not one** — see [`docs/adr/0004-demo-data-isolation.md`](../docs/adr/0004-demo-data-isolation.md).
+`rolefinder-db` (`DB` binding) holds real data only. `rolefinder-demo-db`
+(`DEMO_DB` binding) holds the synthetic fixture only. Every migration needs
+applying to both.
+
 ```bash
-npm run db:generate              # drizzle-kit generate — new migration from src/db/schema
-npx wrangler d1 migrations apply rolefinder-db --local   # or --remote
-npm run seed                     # load fixtures/seed.synthetic.json into local D1
-npm run seed -- --remote         # ...or into the deployed (production) D1
-npm run seed:generate-fixture    # regenerate fixtures/seed.synthetic.json itself
+npm run db:generate                                       # drizzle-kit generate — new migration from src/db/schema
+npx wrangler d1 migrations apply rolefinder-db --local     # repeat for --remote,
+npx wrangler d1 migrations apply rolefinder-demo-db --local  #  and for the demo db
+
+npm run seed                                               # synthetic fixture -> local rolefinder-db (default)
+npm run seed -- --db rolefinder-demo-db                    # synthetic fixture -> local demo db (the real target)
+npm run seed -- --remote --db rolefinder-demo-db           # ...or the deployed demo db
+npm run seed:generate-fixture                               # regenerate fixtures/seed.synthetic.json itself
+
+npm run seed:convert-private -- ../job-search-tracker-*.md  # real tracker -> data/private/seed.local.json (gitignored)
+npm run seed -- --file ../data/private/seed.local.json --db rolefinder-db --remote  # -> production only, never the demo db
 ```
 
 `fixtures/seed.synthetic.json` is fully fabricated — see PLAN_2.0.md §3. It's
