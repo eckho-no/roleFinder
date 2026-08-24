@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 // Loads a seed fixture into D1 via `wrangler d1 execute`.
-// Usage: node scripts/seed.mjs [--remote] [--file <path>]
+// Usage: node scripts/seed.mjs [--remote] [--file <path>] [--db <name>]
 //   --file defaults to fixtures/seed.synthetic.json.
-//   The private converter (scripts/convert-private-tracker.mjs) points this
-//   at ../data/private/seed.local.json instead — never the synthetic one.
+//   --db defaults to rolefinder-db. rolefinder-demo-db is the synthetic/demo
+//   database (see wrangler.jsonc's DEMO_DB binding) — the real board only
+//   ever goes into rolefinder-db, never the demo one.
+//   The private converter (scripts/convert-private-tracker.mjs) points
+//   --file at ../data/private/seed.local.json instead — never the synthetic one.
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -16,6 +19,8 @@ const fixturePath =
   fileFlagIndex !== -1 && args[fileFlagIndex + 1]
     ? args[fileFlagIndex + 1]
     : new URL("../fixtures/seed.synthetic.json", import.meta.url).pathname;
+const dbFlagIndex = args.indexOf("--db");
+const dbName = dbFlagIndex !== -1 && args[dbFlagIndex + 1] ? args[dbFlagIndex + 1] : "rolefinder-db";
 
 const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
 
@@ -75,10 +80,10 @@ const sqlPath = join(dir, "seed.sql");
 writeFileSync(sqlPath, sql);
 
 try {
-  console.log(`Seeding ${target.slice(2)} D1 from ${fixturePath}...`);
+  console.log(`Seeding ${target.slice(2)} ${dbName} from ${fixturePath}...`);
   execFileSync(
     "npx",
-    ["wrangler", "d1", "execute", "rolefinder-db", target, "--file", sqlPath],
+    ["wrangler", "d1", "execute", dbName, target, "--file", sqlPath],
     { stdio: "inherit", cwd: new URL("..", import.meta.url) },
   );
 } finally {

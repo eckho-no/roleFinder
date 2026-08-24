@@ -27,8 +27,10 @@ const markdown = readFileSync(trackerPath, "utf8");
 
 // Matches a markdown table row like:
 // | **Company** | Role | [indeed](url) | 4·4·4·5·5·2 | **24** | No |
+// The first cell is sometimes "**Company** (a parenthetical aside)" — [^|]*
+// after the closing ** absorbs that instead of requiring the pipe right away.
 const ROW_RE =
-  /^\|\s*\*\*(.+?)\*\*\s*\|\s*(.+?)\s*\|\s*(?:\[.*?\]\((.+?)\)|\*no link.*?\*)\s*\|\s*([\d·]+)\s*\|\s*\*\*(\d+)\*\*\s*\|\s*(.+?)\s*\|\s*$/;
+  /^\|\s*\*\*(.+?)\*\*[^|]*\|\s*(.+?)\s*\|\s*(?:\[.*?\]\((.+?)\)|\*no link.*?\*)\s*\|\s*([\d·]+)\s*\|\s*\*\*(\d+)\*\*\s*\|\s*(.+?)\s*\|\s*$/;
 
 function parseTierTable(section, tier) {
   const rows = [];

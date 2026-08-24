@@ -22,6 +22,11 @@
       "binding": "DB",
       "database_name": "rolefinder-db",
       "database_id": "b16dc7e3-4a7b-4c86-a4cb-822d6b5f335b"
+    },
+    {
+      "binding": "DEMO_DB",
+      "database_name": "rolefinder-demo-db",
+      "database_id": "4a311979-d051-4a31-8ab6-9ebe6531a89c"
     }
   ],
   "vectorize": [
