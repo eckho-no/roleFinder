@@ -13,7 +13,7 @@ vi.mock("@opennextjs/cloudflare", () => ({
   })),
 }));
 
-const { proxy } = await import("./proxy");
+const { middleware } = await import("./middleware");
 
 function requestTo(path: string, cookieValue?: string): NextRequest {
   return new NextRequest(`https://rolefinder.example${path}`, {
@@ -21,16 +21,16 @@ function requestTo(path: string, cookieValue?: string): NextRequest {
   });
 }
 
-describe("proxy", () => {
+describe("middleware", () => {
   it("lets POST /api/auth/login through with no session at all", async () => {
-    const response = await proxy(requestTo("/api/auth/login"));
+    const response = await middleware(requestTo("/api/auth/login"));
 
     expect(response.status).toBe(200);
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
   it("rejects a protected path with no session cookie", async () => {
-    const response = await proxy(requestTo("/"));
+    const response = await middleware(requestTo("/"));
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ ok: false });
@@ -47,7 +47,7 @@ describe("proxy", () => {
     // bits are always fully significant.
     const tampered = (cookie[0] === "A" ? "B" : "A") + cookie.slice(1);
 
-    const response = await proxy(requestTo("/", tampered));
+    const response = await middleware(requestTo("/", tampered));
 
     expect(response.status).toBe(401);
   });
@@ -58,7 +58,7 @@ describe("proxy", () => {
       SESSION_SIGNING_SECRET,
     );
 
-    const response = await proxy(requestTo("/", cookie));
+    const response = await middleware(requestTo("/", cookie));
 
     expect(response.status).toBe(401);
   });
@@ -69,7 +69,7 @@ describe("proxy", () => {
       SESSION_SIGNING_SECRET,
     );
 
-    const response = await proxy(requestTo("/", cookie));
+    const response = await middleware(requestTo("/", cookie));
 
     expect(response.status).toBe(200);
     expect(response.headers.get("x-middleware-next")).toBe("1");

@@ -47,7 +47,7 @@ describe("requireSession", () => {
       SESSION_SIGNING_SECRET,
     );
     // Flip the first character, not the last — see the equivalent comment
-    // in proxy.test.ts for why a last-char flip can be a silent no-op.
+    // in middleware.test.ts for why a last-char flip can be a silent no-op.
     const tampered = (cookie[0] === "A" ? "B" : "A") + cookie.slice(1);
 
     await expect(requireSession(requestWithCookie(tampered))).rejects.toBeInstanceOf(
