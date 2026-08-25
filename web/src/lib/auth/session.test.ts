@@ -43,7 +43,10 @@ describe("createSessionCookie / verifySessionCookie", () => {
   it("rejects a cookie with a tampered signature", async () => {
     const cookie = await createSessionCookie(payload(), SECRET);
     const [encodedPayload, encodedSignature] = cookie.split(".");
-    const flipped = encodedSignature.slice(0, -1) + (encodedSignature.endsWith("A") ? "B" : "A");
+    // Flip the first character, not the last — the final base64url
+    // character of a 32-byte digest has discarded low bits (32 % 3 != 0),
+    // so a last-char flip can decode to the identical byte array.
+    const flipped = (encodedSignature[0] === "A" ? "B" : "A") + encodedSignature.slice(1);
     const tampered = `${encodedPayload}.${flipped}`;
 
     await expect(verifySessionCookie(tampered, SECRET)).resolves.toBeNull();
