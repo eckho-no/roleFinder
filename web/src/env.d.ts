@@ -24,6 +24,6 @@ declare global {
     /** M3: read-only demo-mode password, scoped to `DEMO_DB`. */
     DEMO_PASSWORD?: string;
     /** M3: HMAC key for the signed session cookie. */
-    SESSION_SIGNING_SECRET?: string;
+    SESSION_SIGNING_SECRET: string;
   }
 }
