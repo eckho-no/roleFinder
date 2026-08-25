@@ -12,10 +12,16 @@ vi.mock("@opennextjs/cloudflare", () => ({
   })),
 }));
 
-// Imported after the mock, and called directly here with no middleware in
+// Imported after the mock, and called directly here with no proxy gate in
 // the loop at all — this is the "even with middleware bypassed" proof from
 // issue #21's acceptance criteria.
-const { requireSession, UnauthorizedError } = await import("./require-session");
+const {
+  requireSession,
+  requireWritableSession,
+  assertWritable,
+  UnauthorizedError,
+  ReadOnlySessionError,
+} = await import("./require-session");
 
 function requestWithCookie(cookieValue?: string): Request {
   return new Request("https://rolefinder.example/api/whatever", {
@@ -64,5 +70,47 @@ describe("requireSession", () => {
     await expect(requireSession(requestWithCookie(cookie))).rejects.toBeInstanceOf(
       UnauthorizedError,
     );
+  });
+});
+
+describe("assertWritable", () => {
+  it("is a no-op for a real session", () => {
+    expect(() => assertWritable({ role: "real", expiresAt: newExpiry() })).not.toThrow();
+  });
+
+  it("throws ReadOnlySessionError for a demo session", () => {
+    expect(() => assertWritable({ role: "demo", expiresAt: newExpiry() })).toThrow(
+      ReadOnlySessionError,
+    );
+  });
+});
+
+describe("requireWritableSession", () => {
+  it("resolves for a real session", async () => {
+    const cookie = await createSessionCookie(
+      { role: "real", expiresAt: newExpiry() },
+      SESSION_SIGNING_SECRET,
+    );
+
+    await expect(
+      requireWritableSession(requestWithCookie(cookie)),
+    ).resolves.toMatchObject({ role: "real" });
+  });
+
+  it("rejects a demo session with ReadOnlySessionError, not UnauthorizedError", async () => {
+    const cookie = await createSessionCookie(
+      { role: "demo", expiresAt: newExpiry() },
+      SESSION_SIGNING_SECRET,
+    );
+
+    await expect(
+      requireWritableSession(requestWithCookie(cookie)),
+    ).rejects.toBeInstanceOf(ReadOnlySessionError);
+  });
+
+  it("rejects an unauthenticated request with UnauthorizedError", async () => {
+    await expect(
+      requireWritableSession(requestWithCookie()),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
   });
 });

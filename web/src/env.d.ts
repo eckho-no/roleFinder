@@ -21,8 +21,8 @@ declare global {
   interface CloudflareEnv {
     /** M3: constant-time-compared login password (`POST /api/auth/login`). */
     AUTH_PASSWORD: string;
-    /** M3: read-only demo-mode password, scoped to `DEMO_DB`. */
-    DEMO_PASSWORD?: string;
+    /** M3: read-only demo-mode password, scoped to `DEMO_DB`. Public by design — see README. */
+    DEMO_PASSWORD: string;
     /** M3: HMAC key for the signed session cookie. */
     SESSION_SIGNING_SECRET: string;
   }

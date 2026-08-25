@@ -7,6 +7,7 @@ import {
   createSessionCookie,
   newExpiry,
   SESSION_COOKIE_NAME,
+  type SessionRole,
 } from "@/lib/auth/session";
 
 type LoginResult = { ok: true } | { ok: false };
@@ -64,14 +65,21 @@ export async function POST(request: Request): Promise<NextResponse<LoginResult>>
   const submitted = await readSubmittedPassword(request);
 
   // No early return on `submitted === null` — it flows into the same
-  // constant-time compare as any wrong password, so a missing field and an
-  // incorrect field are indistinguishable in both response and timing.
-  const isValid = await constantTimeCompare(submitted, env.AUTH_PASSWORD);
+  // constant-time compares as any wrong password, so a missing field and an
+  // incorrect field are indistinguishable in both response and timing. Both
+  // passwords are checked (never short-circuited) so which one matched —
+  // or that only one was even tried — isn't observable via timing either.
+  const [isRealValid, isDemoValid] = await Promise.all([
+    constantTimeCompare(submitted, env.AUTH_PASSWORD),
+    constantTimeCompare(submitted, env.DEMO_PASSWORD),
+  ]);
+  const isValid = isRealValid || isDemoValid;
   const response = loginResponse(isValid);
   if (!isValid) return response;
 
+  const role: SessionRole = isRealValid ? "real" : "demo";
   const sessionCookie = await createSessionCookie(
-    { role: "real", expiresAt: newExpiry() },
+    { role, expiresAt: newExpiry() },
     env.SESSION_SIGNING_SECRET,
   );
   response.cookies.set(SESSION_COOKIE_NAME, sessionCookie, {
