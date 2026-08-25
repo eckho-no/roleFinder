@@ -2,6 +2,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
 import { constantTimeCompare } from "@/lib/auth/constant-time-compare";
+import { checkAndRecordLoginAttempt, clientIp } from "@/lib/auth/rate-limit";
 import {
   createSessionCookie,
   newExpiry,
@@ -9,6 +10,16 @@ import {
 } from "@/lib/auth/session";
 
 type LoginResult = { ok: true } | { ok: false };
+
+function lockedOutResponse(retryAfterSeconds: number): NextResponse<LoginResult> {
+  // Same body shape as any other failure — a lockout must not reveal
+  // whether the password being guessed was close to correct, only that
+  // this IP has made too many attempts.
+  return NextResponse.json(
+    { ok: false },
+    { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } },
+  );
+}
 
 function loginResponse(ok: boolean): NextResponse<LoginResult> {
   // Same status code and same response shape on every failure path — a
@@ -41,6 +52,15 @@ async function readSubmittedPassword(request: Request): Promise<string | null> {
 
 export async function POST(request: Request): Promise<NextResponse<LoginResult>> {
   const { env } = await getCloudflareContext({ async: true });
+
+  // Rate-limit before touching the password at all — a locked-out request
+  // never reaches `constantTimeCompare`, so the lockout itself can't leak
+  // any timing information about the submitted password.
+  const rateLimit = await checkAndRecordLoginAttempt(env.KV, clientIp(request));
+  if (!rateLimit.allowed) {
+    return lockedOutResponse(rateLimit.retryAfterSeconds);
+  }
+
   const submitted = await readSubmittedPassword(request);
 
   // No early return on `submitted === null` — it flows into the same

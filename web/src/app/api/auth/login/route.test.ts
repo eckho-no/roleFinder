@@ -5,9 +5,19 @@ import { SESSION_COOKIE_NAME, verifySessionCookie } from "@/lib/auth/session";
 const AUTH_PASSWORD = "correct-horse-battery-staple";
 const SESSION_SIGNING_SECRET = "test-session-signing-secret";
 
+// A real (in-memory) KV fake, not a vi.fn — the rate limiter's own logic
+// (window, count, reset) runs for real here, we're only faking storage.
+const kvStore = new Map<string, string>();
+const fakeKv = {
+  get: async (key: string) => kvStore.get(key) ?? null,
+  put: async (key: string, value: string) => {
+    kvStore.set(key, value);
+  },
+};
+
 vi.mock("@opennextjs/cloudflare", () => ({
   getCloudflareContext: vi.fn(async () => ({
-    env: { AUTH_PASSWORD, SESSION_SIGNING_SECRET } as unknown as CloudflareEnv,
+    env: { AUTH_PASSWORD, SESSION_SIGNING_SECRET, KV: fakeKv } as unknown as CloudflareEnv,
     cf: undefined,
     ctx: {} as ExecutionContext,
   })),
@@ -16,10 +26,10 @@ vi.mock("@opennextjs/cloudflare", () => ({
 // Imported after the mock so the route picks up the mocked binding.
 const { POST } = await import("./route");
 
-function loginRequest(body: unknown): Request {
+function loginRequest(body: unknown, ip = "1.2.3.4"): Request {
   return new Request("https://rolefinder.example/api/auth/login", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", "cf-connecting-ip": ip },
     body: JSON.stringify(body),
   });
 }
@@ -27,6 +37,7 @@ function loginRequest(body: unknown): Request {
 describe("POST /api/auth/login", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    kvStore.clear();
   });
 
   it("returns ok:true with 200 and a signed session cookie for the correct password", async () => {
@@ -84,5 +95,28 @@ describe("POST /api/auth/login", () => {
 
     expect(malformed.status).toBe(wrong.status);
     await expect(malformed.json()).resolves.toEqual(await wrong.json());
+  });
+
+  it("locks out an IP after too many attempts, even with the correct password", async () => {
+    for (let i = 0; i < 5; i++) {
+      await POST(loginRequest({ password: "wrong-password" }, "9.9.9.9"));
+    }
+
+    const response = await POST(loginRequest({ password: AUTH_PASSWORD }, "9.9.9.9"));
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBeTruthy();
+    await expect(response.json()).resolves.toEqual({ ok: false });
+    expect(response.cookies.get(SESSION_COOKIE_NAME)).toBeUndefined();
+  });
+
+  it("does not rate-limit other IPs when one is locked out", async () => {
+    for (let i = 0; i < 6; i++) {
+      await POST(loginRequest({ password: "wrong-password" }, "9.9.9.9"));
+    }
+
+    const response = await POST(loginRequest({ password: AUTH_PASSWORD }, "8.8.8.8"));
+
+    expect(response.status).toBe(200);
   });
 });
