@@ -2,12 +2,11 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
 import { constantTimeCompare } from "@/lib/auth/constant-time-compare";
-
-// This route intentionally does not set a session cookie yet — issuing and
-// verifying the HMAC-signed session is #20's job. For #19 the contract is
-// just: compare the submitted password to `AUTH_PASSWORD` in constant time
-// and report success/failure, with no observable difference (status code,
-// body shape, or timing) between "wrong password" and "missing password".
+import {
+  createSessionCookie,
+  newExpiry,
+  SESSION_COOKIE_NAME,
+} from "@/lib/auth/session";
 
 type LoginResult = { ok: true } | { ok: false };
 
@@ -48,6 +47,18 @@ export async function POST(request: Request): Promise<NextResponse<LoginResult>>
   // constant-time compare as any wrong password, so a missing field and an
   // incorrect field are indistinguishable in both response and timing.
   const isValid = await constantTimeCompare(submitted, env.AUTH_PASSWORD);
+  const response = loginResponse(isValid);
+  if (!isValid) return response;
 
-  return loginResponse(isValid);
+  const sessionCookie = await createSessionCookie(
+    { role: "real", expiresAt: newExpiry() },
+    env.SESSION_SIGNING_SECRET,
+  );
+  response.cookies.set(SESSION_COOKIE_NAME, sessionCookie, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/",
+  });
+  return response;
 }

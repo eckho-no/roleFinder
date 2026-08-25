@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { SESSION_COOKIE_NAME, verifySessionCookie } from "@/lib/auth/session";
+
 const AUTH_PASSWORD = "correct-horse-battery-staple";
+const SESSION_SIGNING_SECRET = "test-session-signing-secret";
 
 vi.mock("@opennextjs/cloudflare", () => ({
   getCloudflareContext: vi.fn(async () => ({
-    env: { AUTH_PASSWORD } as unknown as CloudflareEnv,
+    env: { AUTH_PASSWORD, SESSION_SIGNING_SECRET } as unknown as CloudflareEnv,
     cf: undefined,
     ctx: {} as ExecutionContext,
   })),
@@ -26,18 +29,31 @@ describe("POST /api/auth/login", () => {
     vi.clearAllMocks();
   });
 
-  it("returns ok:true with 200 for the correct password", async () => {
+  it("returns ok:true with 200 and a signed session cookie for the correct password", async () => {
     const response = await POST(loginRequest({ password: AUTH_PASSWORD }));
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
+
+    const cookie = response.cookies.get(SESSION_COOKIE_NAME);
+    expect(cookie).toMatchObject({
+      name: SESSION_COOKIE_NAME,
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+    });
+    await expect(
+      verifySessionCookie(cookie?.value, SESSION_SIGNING_SECRET),
+    ).resolves.toMatchObject({ role: "real" });
   });
 
-  it("returns ok:false with 401 for an incorrect password", async () => {
+  it("returns ok:false with 401 and no session cookie for an incorrect password", async () => {
     const response = await POST(loginRequest({ password: "wrong-password" }));
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ ok: false });
+    expect(response.cookies.get(SESSION_COOKIE_NAME)).toBeUndefined();
   });
 
   it("returns the same shape and status for a missing password as for a wrong one", async () => {
