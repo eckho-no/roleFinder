@@ -28,9 +28,9 @@ function readCookie(request: Request, name: string): string | undefined {
 }
 
 /**
- * Verifies the session cookie on `request` independently of `proxy.ts` —
- * every API route handler that isn't explicitly public must call this, so
- * a matcher typo in the proxy gate doesn't leave the route reachable. Throws
+ * Verifies the session cookie on `request` independently of `middleware.ts`
+ * — every API route handler that isn't explicitly public must call this, so
+ * a matcher typo in middleware doesn't leave the route reachable. Throws
  * `UnauthorizedError` (never returns a "maybe" value) when there's no valid
  * session.
  */

@@ -12,7 +12,7 @@ vi.mock("@opennextjs/cloudflare", () => ({
   })),
 }));
 
-// Imported after the mock, and called directly here with no proxy gate in
+// Imported after the mock, and called directly here with no middleware in
 // the loop at all — this is the "even with middleware bypassed" proof from
 // issue #21's acceptance criteria.
 const {
