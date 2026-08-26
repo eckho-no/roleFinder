@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { companies, listings, profileConfig, scores } from "../schema";
+import { createTestD1 } from "../test-d1";
 import { getFilteredListings, parseDashboardFilters } from "./filtered-listings";
-import { createTestD1 } from "./test-d1";
 
 describe("parseDashboardFilters", () => {
   it("parses known enum values for each filter key", () => {
