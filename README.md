@@ -4,11 +4,32 @@ A gated job-search tracker on Cloudflare Workers, with an agentic pipeline that
 extracts, scores, deduplicates and critiques listings — and an eval harness that
 measures whether the scoring agent actually agrees with a human.
 
-**Status:** M0 (foundations) and M1 (deploy spine) complete — CI/CD is green,
-rollback is tested, and deploys land automatically on push to `main`. Live at
+**Status:** M0–M2 complete (foundations, deploy spine, data model) — CI/CD is
+green, rollback is tested, and deploys land automatically on push to `main`.
+M3 (auth) is implemented and stacked in open PRs (#80–#83) pending review; see
+[PLAN_2.0.md](PLAN_2.0.md). Live at
 [rolefinder.d-m-ector.workers.dev](https://rolefinder.d-m-ector.workers.dev) —
-currently a bare deploy-spine smoke test (no auth gate yet; that's M3), see
-[PLAN_2.0.md](PLAN_2.0.md).
+currently a bare deploy-spine smoke test, ungated until M3 merges and its
+secrets are set.
+
+---
+
+## Demo access
+
+Once M3 is merged and deployed, a read-only session over the synthetic board
+is reachable at [rolefinder.d-m-ector.workers.dev](https://rolefinder.d-m-ector.workers.dev)
+with:
+
+```
+password: rolefinder-demo
+```
+
+This is deliberately public — the repo itself is public, but the *data* isn't,
+so this is the only way to see the app working without being handed the real
+password. Demo sessions are read-only (no writes, no agent invocations) and
+are backed by a separate D1 database seeded with synthetic fixtures only —
+they never touch the real board. See
+[docs/adr/0004-demo-data-isolation.md](docs/adr/0004-demo-data-isolation.md).
 
 ---
 
@@ -30,7 +51,7 @@ scratch every time.
 | **Vectors** | Cloudflare Vectorize, embeddings from Workers AI (`bge-base-en-v1.5`) |
 | **Generation** | Anthropic Messages API (direct `fetch`, edge-safe) |
 | **Async** | Cloudflare Queues + Cron Triggers |
-| **Auth** | Single-password gate, HMAC cookie via Web Crypto, KV rate limit |
+| **Auth** | Single-password gate + read-only demo mode, HMAC cookie via Web Crypto, KV rate limit |
 
 ### The agents
 

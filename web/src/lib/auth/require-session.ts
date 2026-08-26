@@ -8,6 +8,12 @@ export class UnauthorizedError extends Error {
   }
 }
 
+export class ReadOnlySessionError extends Error {
+  constructor() {
+    super("Demo sessions are read-only");
+  }
+}
+
 function readCookie(request: Request, name: string): string | undefined {
   const header = request.headers.get("cookie");
   if (!header) return undefined;
@@ -33,5 +39,22 @@ export async function requireSession(request: Request): Promise<SessionPayload> 
   const cookieValue = readCookie(request, SESSION_COOKIE_NAME);
   const session = await verifySessionCookie(cookieValue, env.SESSION_SIGNING_SECRET);
   if (!session) throw new UnauthorizedError();
+  return session;
+}
+
+/** Throws `ReadOnlySessionError` for a demo session; otherwise a no-op. */
+export function assertWritable(session: SessionPayload): void {
+  if (session.role === "demo") throw new ReadOnlySessionError();
+}
+
+/**
+ * `requireSession` plus the read-only check in one call — every write
+ * route handler and every agent-invocation route handler must use this
+ * (not `requireSession` alone), so a demo session can never mutate data or
+ * trigger a paid agent call.
+ */
+export async function requireWritableSession(request: Request): Promise<SessionPayload> {
+  const session = await requireSession(request);
+  assertWritable(session);
   return session;
 }

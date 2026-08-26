@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SESSION_COOKIE_NAME, verifySessionCookie } from "@/lib/auth/session";
 
 const AUTH_PASSWORD = "correct-horse-battery-staple";
+const DEMO_PASSWORD = "rolefinder-demo";
 const SESSION_SIGNING_SECRET = "test-session-signing-secret";
 
 // A real (in-memory) KV fake, not a vi.fn — the rate limiter's own logic
@@ -17,7 +18,12 @@ const fakeKv = {
 
 vi.mock("@opennextjs/cloudflare", () => ({
   getCloudflareContext: vi.fn(async () => ({
-    env: { AUTH_PASSWORD, SESSION_SIGNING_SECRET, KV: fakeKv } as unknown as CloudflareEnv,
+    env: {
+      AUTH_PASSWORD,
+      DEMO_PASSWORD,
+      SESSION_SIGNING_SECRET,
+      KV: fakeKv,
+    } as unknown as CloudflareEnv,
     cf: undefined,
     ctx: {} as ExecutionContext,
   })),
@@ -57,6 +63,18 @@ describe("POST /api/auth/login", () => {
     await expect(
       verifySessionCookie(cookie?.value, SESSION_SIGNING_SECRET),
     ).resolves.toMatchObject({ role: "real" });
+  });
+
+  it("returns ok:true with 200 and a demo-role session cookie for the demo password", async () => {
+    const response = await POST(loginRequest({ password: DEMO_PASSWORD }));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true });
+
+    const cookie = response.cookies.get(SESSION_COOKIE_NAME);
+    await expect(
+      verifySessionCookie(cookie?.value, SESSION_SIGNING_SECRET),
+    ).resolves.toMatchObject({ role: "demo" });
   });
 
   it("returns ok:false with 401 and no session cookie for an incorrect password", async () => {
