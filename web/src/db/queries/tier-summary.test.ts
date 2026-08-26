@@ -1,13 +1,14 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { companies, listings, profileConfig, runs, scores } from "../schema";
+import { createTestD1 } from "../test-d1";
 import { getTierSummary } from "./tier-summary";
-import { createTestD1 } from "./test-d1";
 
-// Real local D1 via wrangler's getPlatformProxy (see test-d1.ts) — this
-// exercises the actual SQL (window functions, D1's dialect) rather than
-// mocking the query builder, since the delta logic here lives entirely in
-// the SQL, not in JS glue that a mock would meaningfully stand in for.
+// Real SQLite via node:sqlite (see ../test-d1.ts's FakeD1Database) with the
+// actual Drizzle migration applied — this exercises the real SQL (window
+// functions) rather than mocking the query builder, since the delta logic
+// here lives entirely in the SQL, not in JS glue that a mock would
+// meaningfully stand in for.
 
 async function seedBaseRow(db: Awaited<ReturnType<typeof createTestD1>>["db"]) {
   const [company] = await db

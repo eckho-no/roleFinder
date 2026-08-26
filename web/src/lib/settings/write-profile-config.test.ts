@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 
 import * as schema from "@/db/schema";
 import { profileConfig } from "@/db/schema/scoring";
-import { FakeD1Database } from "./test-d1";
+import { FakeD1Database } from "@/db/test-d1";
 import {
   ProfileConfigConflictError,
   writeProfileConfigVersion,
