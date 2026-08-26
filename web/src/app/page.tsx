@@ -1,16 +1,23 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
+import { DashboardFilters } from "./_components/dashboard-filters";
 import { DeadlineRail } from "./_components/deadline-rail";
+import { FilteredListingsPanel } from "./_components/filtered-listings";
 import { TierSummaryPanel } from "./_components/tier-summary";
 import { databaseForSession } from "@/lib/auth/database-for-session";
 import { requireSessionForPage } from "@/lib/auth/session-for-page";
 import { getDb } from "@/db/client";
 import { getDeadlineRail } from "@/db/queries/deadline-rail";
+import { getFilteredListings, parseDashboardFilters } from "@/db/queries/filtered-listings";
 import { getTierSummary } from "@/db/queries/tier-summary";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   // Middleware has already rejected any request without a valid session by
   // the time this renders — this resolves *which* session (real vs demo) so
   // `databaseForSession` can pick the right D1 binding. See
@@ -19,9 +26,12 @@ export default async function Home() {
   const { env } = await getCloudflareContext({ async: true });
   const db = getDb(databaseForSession(session, env));
 
-  const [deadlineRail, tierSummary] = await Promise.all([
+  const filters = parseDashboardFilters(await searchParams);
+
+  const [deadlineRail, tierSummary, filteredListings] = await Promise.all([
     getDeadlineRail(db),
     getTierSummary(db),
+    getFilteredListings(db, filters),
   ]);
 
   return (
@@ -47,6 +57,15 @@ export default async function Home() {
         <DeadlineRail entries={deadlineRail} />
 
         <TierSummaryPanel summary={tierSummary} />
+
+        <section className="flex flex-col gap-3">
+          {/* Filters are URL search params end to end — DashboardFilters
+              reads/writes them client-side, this server component parses
+              them from `searchParams` on every request, so a filtered view
+              is shareable and bookmarkable (issue #26). */}
+          <DashboardFilters />
+          <FilteredListingsPanel listings={filteredListings} />
+        </section>
       </div>
     </div>
   );
