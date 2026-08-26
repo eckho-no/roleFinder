@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { companies, listings } from "../schema";
+import { createTestD1 } from "../test-d1";
 import { getDeadlineRail } from "./deadline-rail";
-import { createTestD1 } from "./test-d1";
 
 const NOW = new Date("2026-06-01T12:00:00Z");
 const DAY_MS = 24 * 60 * 60 * 1000;
