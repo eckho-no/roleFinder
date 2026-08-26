@@ -45,12 +45,20 @@ jobs:
           url="$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' /tmp/deploy.log | head -1)"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
-      - name: Smoke test the deployed URL
+      # M3 (#19-23) added a proxy/middleware gate: every route except
+      # POST /api/auth/login requires a valid session cookie, so an
+      # unauthenticated request to `/` now correctly returns 401 — that's
+      # the M3 exit criteria ("fresh browser can't reach anything"), not a
+      # deploy failure. Expecting 200 here would mean the gate got
+      # regressed back open. If a future milestone makes `/` public again
+      # on purpose, update this expectation deliberately, don't just
+      # revert it back to 200.
+      - name: Smoke test the deployed URL (expect the auth gate, not a 200)
         run: |
           set -euo pipefail
           code="$(curl -s -o /dev/null -w '%{http_code}' "${{ steps.deploy.outputs.url }}")"
           echo "HTTP $code"
-          if [[ "$code" != "200" ]]; then
-            echo "::error::Deployed URL returned HTTP $code, expected 200"
+          if [[ "$code" != "401" ]]; then
+            echo "::error::Deployed URL returned HTTP $code, expected 401 (unauthenticated request should be gated)"
             exit 1
           fi
