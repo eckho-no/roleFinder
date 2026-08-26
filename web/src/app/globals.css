@@ -3,6 +3,18 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Dashboard palette carried over from the legacy tracker (issue #25). */
+  --ink: #0f1214;
+  --paper: #e7e3d8;
+  --paper-dim: #9ba3a0;
+  --act: #3ecf6b;
+  --act-dim: #1e3b29;
+  --consider: #e8a33d;
+  --consider-dim: #3e3320;
+  --skip: #b5533c;
+  --skip-dim: #3a231d;
+  --stale: #6c7679;
 }
 
 @theme inline {
