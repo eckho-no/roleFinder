@@ -93,7 +93,10 @@ export default async function ListingDetailPage(
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 bg-[var(--ink)] p-8 text-[var(--paper)]">
       <div className="flex flex-col gap-3">
-        <Link href="/" className="text-sm text-[var(--paper-dim)] hover:underline">
+        <Link
+          href="/"
+          className="flex min-h-11 w-fit items-center text-sm text-[var(--paper-dim)] hover:underline"
+        >
           ← Back to dashboard
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -132,7 +135,7 @@ export default async function ListingDetailPage(
                 href={row.url}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[var(--act)] hover:underline"
+                className="-mx-1 -my-2.5 inline-flex min-h-11 items-center break-all px-1 py-2.5 text-[var(--act)] hover:underline"
               >
                 {row.url}
               </a>

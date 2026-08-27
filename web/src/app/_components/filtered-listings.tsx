@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { FilteredListing } from "@/db/queries/filtered-listings";
 import type { Tier } from "@/db/schema/unions";
 
@@ -17,28 +19,29 @@ export function FilteredListingsPanel({ listings }: { listings: FilteredListing[
       ) : (
         <ul className="flex flex-col divide-y" style={{ borderColor: "var(--paper-dim)" }}>
           {listings.map((listing) => (
-            <li
-              key={listing.listingId}
-              className="flex items-center justify-between gap-3 py-2"
-              style={{ borderColor: "var(--paper-dim)" }}
-            >
-              <div className="flex min-w-0 flex-col">
-                <span className="truncate text-sm font-medium" style={{ color: "var(--paper)" }}>
-                  {listing.title}
-                </span>
-                <span className="truncate text-xs" style={{ color: "var(--paper-dim)" }}>
-                  {listing.companyName} · {listing.status} · {listing.triage.replace(/_/g, " ")} ·{" "}
-                  {listing.source}
-                </span>
-              </div>
-              {listing.tier && (
-                <span
-                  className="shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold uppercase"
-                  style={{ color: TIER_COLOR[listing.tier], border: `1px solid ${TIER_COLOR[listing.tier]}` }}
-                >
-                  {listing.tier}
-                </span>
-              )}
+            <li key={listing.listingId} style={{ borderColor: "var(--paper-dim)" }}>
+              <Link
+                href={`/listings/${listing.listingId}`}
+                className="flex min-h-11 items-center justify-between gap-3 py-2"
+              >
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate text-sm font-medium" style={{ color: "var(--paper)" }}>
+                    {listing.title}
+                  </span>
+                  <span className="truncate text-xs" style={{ color: "var(--paper-dim)" }}>
+                    {listing.companyName} · {listing.status} · {listing.triage.replace(/_/g, " ")} ·{" "}
+                    {listing.source}
+                  </span>
+                </div>
+                {listing.tier && (
+                  <span
+                    className="shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold uppercase"
+                    style={{ color: TIER_COLOR[listing.tier], border: `1px solid ${TIER_COLOR[listing.tier]}` }}
+                  >
+                    {listing.tier}
+                  </span>
+                )}
+              </Link>
             </li>
           ))}
         </ul>
