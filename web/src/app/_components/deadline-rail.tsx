@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { DeadlineRailEntry } from "@/db/queries/deadline-rail";
 
 function formatDaysLeft(expiresAt: Date, now: Date): string {
@@ -65,28 +67,29 @@ export function DeadlineRail({
       ) : (
         <ul className="mt-2 flex flex-col divide-y" style={{ borderColor: "var(--paper-dim)" }}>
           {entries.map((entry) => (
-            <li
-              key={entry.listingId}
-              className="flex items-center justify-between gap-3 py-2"
-              style={{ borderColor: "var(--paper-dim)" }}
-            >
-              <div className="flex min-w-0 flex-col">
-                <span
-                  className="truncate text-sm font-medium"
-                  style={{ color: "var(--paper)" }}
-                >
-                  {entry.title}
-                </span>
-                <span className="truncate text-xs" style={{ color: "var(--paper-dim)" }}>
-                  {entry.companyName}
-                </span>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <DeadlineSourceBadge source={entry.deadlineSource} />
-                <span className="text-sm font-semibold" style={{ color: "var(--paper)" }}>
-                  {formatDaysLeft(entry.expiresAt, now)}
-                </span>
-              </div>
+            <li key={entry.listingId} style={{ borderColor: "var(--paper-dim)" }}>
+              <Link
+                href={`/listings/${entry.listingId}`}
+                className="flex min-h-11 items-center justify-between gap-3 py-2"
+              >
+                <div className="flex min-w-0 flex-col">
+                  <span
+                    className="truncate text-sm font-medium"
+                    style={{ color: "var(--paper)" }}
+                  >
+                    {entry.title}
+                  </span>
+                  <span className="truncate text-xs" style={{ color: "var(--paper-dim)" }}>
+                    {entry.companyName}
+                  </span>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <DeadlineSourceBadge source={entry.deadlineSource} />
+                  <span className="text-sm font-semibold" style={{ color: "var(--paper)" }}>
+                    {formatDaysLeft(entry.expiresAt, now)}
+                  </span>
+                </div>
+              </Link>
             </li>
           ))}
         </ul>

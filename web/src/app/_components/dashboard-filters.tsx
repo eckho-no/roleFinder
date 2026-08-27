@@ -62,7 +62,7 @@ export function DashboardFilters() {
         <label key={key} className="flex flex-col gap-1 text-xs" style={{ color: "var(--paper-dim)" }}>
           <span className="uppercase tracking-wide">{key}</span>
           <select
-            className="rounded border bg-transparent px-2 py-1 text-sm"
+            className="min-h-11 rounded border bg-transparent px-2 py-1 text-sm"
             style={{ borderColor: "var(--paper-dim)", color: "var(--paper)" }}
             value={searchParams.get(key) ?? ""}
             onChange={(event) => setFilter(key, event.target.value)}
@@ -81,7 +81,7 @@ export function DashboardFilters() {
       {hasAnyFilter && (
         <button
           type="button"
-          className="mt-4 text-xs underline"
+          className="mt-4 flex min-h-11 items-center text-xs underline"
           style={{ color: "var(--paper-dim)" }}
           onClick={() => router.replace(pathname)}
         >

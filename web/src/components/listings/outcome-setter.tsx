@@ -61,7 +61,7 @@ export function OutcomeSetter({
       </label>
       <select
         id="outcome-select"
-        className="rounded border border-[var(--paper-dim)] bg-transparent px-3 py-2 text-[var(--paper)] disabled:cursor-not-allowed disabled:opacity-50"
+        className="h-11 rounded border border-[var(--paper-dim)] bg-transparent px-3 py-2 text-[var(--paper)] disabled:cursor-not-allowed disabled:opacity-50"
         value={outcome}
         disabled={readOnly || isPending}
         onChange={(event) => handleChange(event.target.value as Outcome)}
