@@ -15,7 +15,7 @@ import { requireSession, UnauthorizedError } from "@/lib/auth/require-session";
 
 // Routes reachable without a session. Keep this list short and explicit —
 // everything else, including `/`, requires a valid `rf_session` cookie.
-const PUBLIC_PATHS = new Set(["/api/auth/login"]);
+const PUBLIC_PATHS = new Set(["/login", "/api/auth/login"]);
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   if (PUBLIC_PATHS.has(request.nextUrl.pathname)) {
