@@ -1,30 +1,43 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
+import { TierSummaryPanel } from "./_components/tier-summary";
+import { databaseForSession } from "@/lib/auth/database-for-session";
+import { requireSessionForPage } from "@/lib/auth/session-for-page";
+import { getDb } from "@/db/client";
+import { getTierSummary } from "@/db/queries/tier-summary";
+
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
+  // Middleware has already rejected any request without a valid session by
+  // the time this renders — this resolves *which* session (real vs demo) so
+  // `databaseForSession` can pick the right D1 binding. See
+  // `src/lib/auth/session-for-page.ts` for why this isn't `requireSession`.
+  const session = await requireSessionForPage();
   const { env } = await getCloudflareContext({ async: true });
+  const db = getDb(databaseForSession(session, env));
 
-  await env.DB.prepare("INSERT INTO deploy_check (note) VALUES (?)")
-    .bind("M1 deploy spine check")
-    .run();
-
-  const { results } = await env.DB.prepare(
-    "SELECT count(*) as count FROM deploy_check",
-  ).all<{ count: number }>();
-  const count = results[0]?.count ?? 0;
+  const tierSummary = await getTierSummary(db);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-50 p-16 font-sans dark:bg-black">
-      <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">
-        roleFinder — deploy spine
-      </h1>
-      <p className="text-lg text-zinc-600 dark:text-zinc-400">
-        D1 round-trip OK — {count} row{count === 1 ? "" : "s"} in{" "}
-        <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-          deploy_check
-        </code>
-      </p>
+    <div
+      className="min-h-screen p-6 sm:p-10"
+      style={{ backgroundColor: "var(--ink)", color: "var(--paper)" }}
+    >
+      <div className="mx-auto flex max-w-5xl flex-col gap-8">
+        <header>
+          <h1 className="text-xl font-semibold" style={{ color: "var(--paper)" }}>
+            roleFinder
+          </h1>
+          {session.role === "demo" && (
+            <p className="mt-1 text-sm" style={{ color: "var(--paper-dim)" }}>
+              Demo mode — read-only synthetic board.
+            </p>
+          )}
+        </header>
+
+        <TierSummaryPanel summary={tierSummary} />
+      </div>
     </div>
   );
 }

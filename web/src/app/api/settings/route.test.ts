@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createSessionCookie, newExpiry, SESSION_COOKIE_NAME } from "@/lib/auth/session";
-import { FakeD1Database } from "@/lib/settings/test-d1";
+import { FakeD1Database } from "@/db/test-d1";
 
 const SESSION_SIGNING_SECRET = "test-session-signing-secret";
 

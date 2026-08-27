@@ -3,9 +3,22 @@
 // in this project), but drizzle-orm/d1's session only calls a handful of
 // D1Database methods — `prepare(sql).bind(...).all()/.run()` and a top-level
 // `batch(statements)` — so a thin real-SQLite adapter covering just those
-// gives the version/isCurrent logic in write-profile-config.ts a real
-// database to run against instead of hand-mocked query results.
+// gives query modules a real database to run against instead of hand-mocked
+// query results, without needing wrangler's `getPlatformProxy` (which starts
+// a remote proxy session and requires a `CLOUDFLARE_API_TOKEN` — fine
+// locally where `wrangler login` has already happened, but not available in
+// CI; see the `web` job's failure on tier-summary.test.ts before this
+// moved off it).
+//
+// Shared home for this (moved from `src/lib/settings/test-d1.ts`, where it
+// first landed for the profile-config writer) now that dashboard query
+// tests need it too — one copy for every "give me a real SQLite-backed
+// D1Database in a test" caller, not one per feature.
+import { readFileSync } from "node:fs";
 import { DatabaseSync, type StatementSync } from "node:sqlite";
+import { fileURLToPath } from "node:url";
+
+import { getDb } from "./client";
 
 type D1LikeResult = {
   results: unknown[];
@@ -105,4 +118,34 @@ export class FakeD1Database {
     }
     return results;
   }
+}
+
+const MIGRATION_SQL = readFileSync(
+  fileURLToPath(new URL("../../migrations/0000_freezing_wendell_vaughn.sql", import.meta.url)),
+  "utf8",
+  // `node:sqlite`'s `exec()` (unlike D1's own `.exec()`) is fine with the
+  // whole multi-statement migration file in one call, `--> statement-
+  // breakpoint` markers and multi-line `CREATE TABLE` bodies included — no
+  // splitting needed, just strip the marker itself since it's not SQL.
+).replace(/--> statement-breakpoint/g, "");
+
+/**
+ * Full-schema counterpart to `new FakeD1Database(ddl)` for query modules
+ * under `src/db/queries` that span multiple tables (joins across listings,
+ * companies, scores, runs, ...) rather than the single-table DDL snippets
+ * `write-profile-config.test.ts` uses. Applies the real Drizzle migration,
+ * so the schema here can never drift from what production actually runs.
+ * `dispose` is a no-op (the fake is in-memory and synchronous under the
+ * hood) but kept so call sites read the same as a real async resource and
+ * don't need to change if this ever moves back to a real D1 connection.
+ */
+export async function createTestD1(): Promise<{
+  db: ReturnType<typeof getDb>;
+  dispose: () => Promise<void>;
+}> {
+  const fakeD1 = new FakeD1Database(MIGRATION_SQL);
+  // drizzle-orm/d1's own D1Database type is workers-runtime-shaped; the fake
+  // only implements the subset (`prepare`/`batch`) the driver actually
+  // calls, so it's cast rather than fully satisfying the ambient type.
+  return { db: getDb(fakeD1 as unknown as D1Database), dispose: async () => {} };
 }
