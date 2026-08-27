@@ -1,9 +1,11 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
+import { DeadlineRail } from "./_components/deadline-rail";
 import { TierSummaryPanel } from "./_components/tier-summary";
 import { databaseForSession } from "@/lib/auth/database-for-session";
 import { requireSessionForPage } from "@/lib/auth/session-for-page";
 import { getDb } from "@/db/client";
+import { getDeadlineRail } from "@/db/queries/deadline-rail";
 import { getTierSummary } from "@/db/queries/tier-summary";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +19,10 @@ export default async function Home() {
   const { env } = await getCloudflareContext({ async: true });
   const db = getDb(databaseForSession(session, env));
 
-  const tierSummary = await getTierSummary(db);
+  const [deadlineRail, tierSummary] = await Promise.all([
+    getDeadlineRail(db),
+    getTierSummary(db),
+  ]);
 
   return (
     <div
@@ -35,6 +40,11 @@ export default async function Home() {
             </p>
           )}
         </header>
+
+        {/* Deadline rail is the top element of the page, above tier counts
+            — issue #24: "the highest-value behaviour of the tracker it
+            replaces." */}
+        <DeadlineRail entries={deadlineRail} />
 
         <TierSummaryPanel summary={tierSummary} />
       </div>
