@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LoginForm } from "./login-form";
 
 export default function LoginPage() {
@@ -10,7 +11,12 @@ export default function LoginPage() {
         <h1 className="mb-6 text-xl font-semibold" style={{ color: "var(--paper)" }}>
           roleFinder
         </h1>
-        <LoginForm />
+        {/* useSearchParams (for the post-login `next` redirect) opts a
+            client component out of static rendering unless wrapped in
+            Suspense. */}
+        <Suspense>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   );

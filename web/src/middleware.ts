@@ -26,7 +26,16 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     await requireSession(request);
   } catch (error) {
     if (error instanceof UnauthorizedError) {
-      return NextResponse.json({ ok: false }, { status: 401 });
+      // API routes need a machine-readable response — a client fetch()
+      // can't follow a redirect into an HTML login page usefully. Page
+      // routes get sent to the login form instead of a bare JSON 401,
+      // which is what every unauthenticated visitor was hitting before.
+      if (request.nextUrl.pathname.startsWith("/api/")) {
+        return NextResponse.json({ ok: false }, { status: 401 });
+      }
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("next", request.nextUrl.pathname);
+      return NextResponse.redirect(loginUrl);
     }
     throw error;
   }

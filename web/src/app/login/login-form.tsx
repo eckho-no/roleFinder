@@ -1,12 +1,22 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 type LoginBody = { ok: boolean };
 
+// Only ever redirect back to a same-app relative path. `next` comes off the
+// URL, so treat it as attacker-controlled — a bare `/x` is fine, `//evil.com`
+// or `https://evil.com` (browsers treat `//` as protocol-relative) is not.
+function sanitizeNext(next: string | null): string {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/";
+  return next;
+}
+
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = sanitizeNext(searchParams.get("next"));
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -37,7 +47,7 @@ export function LoginForm() {
       // The session cookie is already set (via the fetch response's
       // Set-Cookie header) by the time this runs, so the RSC request
       // `router.push` triggers carries it — no full reload needed.
-      router.push("/");
+      router.push(next);
       router.refresh();
     } catch {
       setError("Something went wrong — try again.");
