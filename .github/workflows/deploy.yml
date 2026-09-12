@@ -46,19 +46,26 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       # M3 (#19-23) added a proxy/middleware gate: every route except
-      # POST /api/auth/login requires a valid session cookie, so an
-      # unauthenticated request to `/` now correctly returns 401 — that's
-      # the M3 exit criteria ("fresh browser can't reach anything"), not a
-      # deploy failure. Expecting 200 here would mean the gate got
-      # regressed back open. If a future milestone makes `/` public again
-      # on purpose, update this expectation deliberately, don't just
-      # revert it back to 200.
+      # /login and POST /api/auth/login requires a valid session cookie.
+      # An unauthenticated request to `/` used to return a bare 401; issue
+      # #95 changed page routes (not API routes) to redirect to /login
+      # instead, so a visitor lands on the actual form rather than raw
+      # JSON. Either way, the exit criteria is the same as M3's ("fresh
+      # browser can't reach anything") — expecting 200 here would mean the
+      # gate got regressed back open. If a future milestone makes `/`
+      # public again on purpose, update this expectation deliberately,
+      # don't just revert it back to 200.
       - name: Smoke test the deployed URL (expect the auth gate, not a 200)
         run: |
           set -euo pipefail
           code="$(curl -s -o /dev/null -w '%{http_code}' "${{ steps.deploy.outputs.url }}")"
           echo "HTTP $code"
-          if [[ "$code" != "401" ]]; then
-            echo "::error::Deployed URL returned HTTP $code, expected 401 (unauthenticated request should be gated)"
+          if [[ "$code" != "307" ]]; then
+            echo "::error::Deployed URL returned HTTP $code, expected 307 (unauthenticated request should redirect to /login)"
+            exit 1
+          fi
+          location="$(curl -s -o /dev/null -w '%{redirect_url}' "${{ steps.deploy.outputs.url }}")"
+          if [[ "$location" != *"/login"* ]]; then
+            echo "::error::Redirect target was '$location', expected it to point at /login"
             exit 1
           fi

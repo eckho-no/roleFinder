@@ -29,14 +29,30 @@ describe("middleware", () => {
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
-  it("rejects a protected path with no session cookie", async () => {
+  it("redirects a protected page path with no session cookie to /login", async () => {
     const response = await middleware(requestTo("/"));
+
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location")!);
+    expect(location.pathname).toBe("/login");
+    expect(location.searchParams.get("next")).toBe("/");
+  });
+
+  it("preserves the original path in the redirect's next param", async () => {
+    const response = await middleware(requestTo("/listings/42"));
+
+    const location = new URL(response.headers.get("location")!);
+    expect(location.searchParams.get("next")).toBe("/listings/42");
+  });
+
+  it("rejects a protected API path with no session cookie as JSON 401", async () => {
+    const response = await middleware(requestTo("/api/settings"));
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ ok: false });
   });
 
-  it("rejects a protected path with a tampered session cookie", async () => {
+  it("redirects a protected path with a tampered session cookie", async () => {
     const cookie = await createSessionCookie(
       { role: "real", expiresAt: newExpiry() },
       SESSION_SIGNING_SECRET,
@@ -49,10 +65,10 @@ describe("middleware", () => {
 
     const response = await middleware(requestTo("/", tampered));
 
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(307);
   });
 
-  it("rejects a protected path with an expired session cookie", async () => {
+  it("redirects a protected path with an expired session cookie", async () => {
     const cookie = await createSessionCookie(
       { role: "real", expiresAt: Date.now() - 1000 },
       SESSION_SIGNING_SECRET,
@@ -60,7 +76,7 @@ describe("middleware", () => {
 
     const response = await middleware(requestTo("/", cookie));
 
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(307);
   });
 
   it("lets a protected path through with a valid session cookie", async () => {
