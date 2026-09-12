@@ -4,6 +4,7 @@ import { desc } from "drizzle-orm";
 import { requireSessionForPage } from "@/lib/auth/session-for-page";
 import { databaseForSession } from "@/lib/auth/database-for-session";
 import { getDb } from "@/db/client";
+import { getTodaySpendUsd } from "@/db/queries/agent-spend";
 import { profileConfig } from "@/db/schema/scoring";
 import { SettingsForm } from "./settings-form";
 
@@ -19,6 +20,9 @@ export default async function SettingsPage() {
     .from(profileConfig)
     .orderBy(desc(profileConfig.version));
   const current = history.find((row) => row.isCurrent) ?? null;
+
+  const spentTodayUsd = await getTodaySpendUsd(db);
+  const dailyBudgetUsd = Number(env.AGENT_DAILY_BUDGET_USD) || 5;
 
   // Demo sessions are read-only end to end (see requireWritableSession in
   // require-session.ts, which POST /api/settings enforces server-side
@@ -52,6 +56,29 @@ export default async function SettingsPage() {
           <p className="text-sm text-[var(--paper-dim)]">No config saved yet.</p>
         )}
         {current?.note && <p className="text-sm text-[var(--ink)]">{current.note}</p>}
+      </div>
+
+      <div className="flex flex-col gap-2 rounded border border-[var(--paper-dim)]/30 p-4">
+        <h2 className="text-sm font-medium text-[var(--paper-dim)]">Agent spend today</h2>
+        <div className="flex items-baseline gap-3">
+          <span
+            className={
+              spentTodayUsd >= dailyBudgetUsd
+                ? "text-lg font-semibold text-[var(--skip)]"
+                : "text-lg font-semibold text-[var(--ink)]"
+            }
+          >
+            ${spentTodayUsd.toFixed(4)}
+          </span>
+          <span className="text-sm text-[var(--paper-dim)]">
+            of ${dailyBudgetUsd.toFixed(2)} daily cap
+          </span>
+          {spentTodayUsd >= dailyBudgetUsd && (
+            <span className="rounded bg-[var(--skip-dim)] px-1.5 py-0.5 text-xs text-[var(--skip)]">
+              cap reached — new agent calls denied until UTC midnight
+            </span>
+          )}
+        </div>
       </div>
 
       {isReadOnly ? (
