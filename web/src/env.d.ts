@@ -25,5 +25,7 @@ declare global {
     DEMO_PASSWORD: string;
     /** M3: HMAC key for the signed session cookie. */
     SESSION_SIGNING_SECRET: string;
+    /** M5: direct fetch to the Messages API — only from `src/lib/agents/dispatcher.ts`. */
+    ANTHROPIC_API_KEY: string;
   }
 }
